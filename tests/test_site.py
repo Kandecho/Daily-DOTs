@@ -33,12 +33,12 @@ class SiteTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def edition(self, date, legacy=False):
+    def edition(self, date):
         folder = self.root / "editions" / date
         folder.mkdir(parents=True, exist_ok=True)
         meta = json.dumps({"issue_date": date, "title": "TEST"})
         (folder / f"原稿_{date}.md").write_text(f"---\n{meta}\n---\n\n# TEST\n", encoding="utf-8")
-        name = f"全球晚间新闻_{date}_翻页{'试读' if legacy else ''}.html"
+        name = f"全球晚间新闻_{date}_翻页.html"
         year, month, day = map(int, date.split("-"))
         html = folder / name
         html.write_text(f"<!doctype html><title>TEST {year}年{month}月{day}日</title><p>TEST</p>", encoding="utf-8")
@@ -50,7 +50,7 @@ class SiteTests(unittest.TestCase):
                               encoding="utf-8", env=UTF8_ENV)
 
     def test_latest_is_real_date_and_all_links_stay_under_project_prefix(self):
-        self.edition("2098-12-31", legacy=True)
+        self.edition("2098-12-31")
         newest = self.edition("2099-01-01")
         result = self.run_site()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -68,8 +68,8 @@ class SiteTests(unittest.TestCase):
             target = self.root / unquote(url.path.removeprefix("/Daily-DOTs/"))
             self.assertTrue(target.is_file(), str(target))
 
-    def test_single_legacy_edition_is_preserved_and_rerun_is_deterministic(self):
-        issue = self.edition("2098-12-31", legacy=True)
+    def test_single_edition_is_preserved_and_rerun_is_deterministic(self):
+        issue = self.edition("2098-12-31")
         before = issue.read_bytes()
         result = self.run_site()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -90,15 +90,15 @@ class SiteTests(unittest.TestCase):
     def test_metadata_date_mismatch_is_rejected(self):
         self.edition("2098-12-31")
         draft = self.root / "editions/2098-12-31/原稿_2098-12-31.md"
-        draft.write_text(draft.read_text(encoding="utf-8").replace("2098-12-31", "2099-01-01"))
+        draft.write_text(draft.read_text(encoding="utf-8").replace("2098-12-31", "2099-01-01"), encoding="utf-8")
         result = self.run_site()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertNotIn("Traceback", result.stderr)
         self.assertFalse((self.root / "index.html").exists())
 
-    def test_multiple_candidate_html_files_are_rejected_not_guessed(self):
-        self.edition("2098-12-31", legacy=True)
-        self.edition("2098-12-31")
+    def test_extra_html_in_edition_is_rejected_not_guessed(self):
+        issue = self.edition("2098-12-31")
+        issue.with_name("全球晚间新闻_2098-12-31_翻页试读.html").write_bytes(issue.read_bytes())
         result = self.run_site()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertNotIn("Traceback", result.stderr)
@@ -106,7 +106,7 @@ class SiteTests(unittest.TestCase):
 
     def test_html_date_mismatch_is_rejected(self):
         issue = self.edition("2098-12-31")
-        issue.write_text(issue.read_text(encoding="utf-8").replace("2098年12月31日", "2099年1月1日"))
+        issue.write_text(issue.read_text(encoding="utf-8").replace("2098年12月31日", "2099年1月1日"), encoding="utf-8")
         result = self.run_site()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertNotIn("Traceback", result.stderr)

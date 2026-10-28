@@ -24,11 +24,9 @@ def editions(root):
             continue
         date = dt.date.fromisoformat(folder.name).isoformat()
         draft = folder / f"原稿_{date}.md"
-        candidates = [folder / f"全球晚间新闻_{date}_翻页{suffix}.html" for suffix in ("", "试读")]
-        candidates = [p for p in candidates if p.is_file()]
-        if not draft.is_file() or len(candidates) != 1:
-            raise ValueError(f"{date} 需要一份同日期原稿和唯一翻页 HTML（支持旧期试读文件名）")
-        html = candidates[0]
+        html = folder / f"全球晚间新闻_{date}_翻页.html"
+        if not draft.is_file() or sorted(folder.glob("*.html")) != [html]:
+            raise ValueError(f"{date} 需要一份同日期原稿和唯一的 全球晚间新闻_{date}_翻页.html")
         if any(p.is_symlink() or not p.resolve().is_relative_to(root.resolve()) for p in (folder, draft, html)):
             raise ValueError(f"{date} 不接受符号链接或项目以外的文件")
         raw = draft.read_text(encoding="utf-8")
