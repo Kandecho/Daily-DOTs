@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<link rel="icon" href="data:,">
+<style>
+{{STYLE}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="mast">
+    <nav class="mast-nav">{{PREV}}<span class="mid"><a href="index.html">往期</a><button type="button" id="theme">明暗</button></span>{{NEXT}}</nav>
+    <h1 class="nameplate">{{NAMEPLATE}}</h1>
+    <div class="dateline"><span>{{DATE}}</span><span>{{CUTOFF}}</span><span>{{COUNT}}</span></div>
+  </header>
+  <nav class="toc" aria-label="要目">{{TOC}}</nav>
+  <main>
+{{FRONT}}
+{{BRIEFS}}
+  </main>
+</div>
+{{EXPLORE}}
+<div class="page">
+  <footer class="colophon">{{INTRO}}<p>底稿：{{SOURCE}}。版面由程序按版面单生成；正文与底稿逐字核对一致，导语和引语取自正文原文。</p></footer>
+</div>
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById("theme");
+  try { var t = localStorage.getItem("newsfmt-theme"); if (t) root.dataset.theme = t; } catch (e) {}
+  btn.addEventListener("click", function () {
+    var dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("newsfmt-theme", root.dataset.theme); } catch (e) {}
+  });
+  // 窄屏收起次条和探索位的全文，宽屏和打印时展开
+  var mq = matchMedia("(max-width: 759px)");
+  function sync() { document.querySelectorAll("details.m-fold").forEach(function (d) { d.open = !mq.matches; }); }
+  sync();
+  if (mq.addEventListener) mq.addEventListener("change", sync);
+  addEventListener("beforeprint", function () { document.querySelectorAll("details").forEach(function (d) { d.open = true; }); });
+})();
+</script>
+</body>
+</html>

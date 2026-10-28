@@ -1,0 +1,7 @@
+# Consistent public checkout line endings; binary fonts remain binary.
+* text=auto eol=lf
+*.ttc binary
+*.otf binary
+*.ttf binary
+*.woff binary
+*.woff2 binary

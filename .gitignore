@@ -1,0 +1,38 @@
+# Build products and local originals
+_build/
+archive/
+dist/
+backups/
+*.log
+*.tmp
+*.bak
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+# Full font files are provisioned locally; OFL.txt stays tracked
+/tools/fonts/*.ttc
+/tools/fonts/*.otf
+/tools/fonts/*.ttf
+/tools/fonts/*.woff
+/tools/fonts/*.woff2
+# Credentials and private machine/editor settings
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+.aws/
+.ssh/
+.codex/
+.agents/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,2 @@
+# Runtime dependency; no JavaScript packages are required.
+fonttools==4.61.1
