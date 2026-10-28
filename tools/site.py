@@ -13,7 +13,9 @@ import sys
 import tempfile
 from urllib.parse import quote
 
-from core import NAME, SUBTITLE, edition_html_name
+from core import NAME, SUBTITLE, cn_date, edition_html_name, weekday
+from flip import masthead
+from font_subset import embed
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -49,60 +51,65 @@ def editions(root):
     return found
 
 
+HOME_CSS = """
+/* 首页：和目录页同一个报头，下面按日期列出各期 */
+.home-in {
+  max-width: 620px; margin: 0 auto; padding-block: 14px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.home .nameplate { margin-top: 18px; text-align: center; font-size: clamp(38px, 11vw, 56px); letter-spacing: .02em; padding-left: 0; }
+.home .dateline { justify-content: space-between; margin-top: 8px; padding: 5px 2px; font-size: 13px; }
+.home .issues { display: flex; flex-direction: column; margin-top: 6px; }
+.home .issue {
+  display: flex; align-items: baseline; gap: 12px; min-height: 54px; padding: 13px 2px;
+  border-bottom: 1px solid var(--rule); text-decoration: none;
+}
+.issue .d { font: 700 18px/1.4 var(--serif); font-variant-numeric: tabular-nums; }
+.issue .w { font-size: 13px; color: var(--muted); }
+.issue .tag {
+  margin-left: auto; padding: 4px 8px; border-radius: 3px;
+  background: var(--accent); color: var(--paper); font: 700 12px/1 var(--sans); letter-spacing: .08em;
+}
+.issue:hover .d { text-decoration: underline; text-underline-offset: 4px; }
+.issue:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+"""
+
+
 def render(issues):
     """Use relative URLs so the same entry works locally and under a project URL."""
     def url(path):
         return escape(quote(path, safe="/"), quote=True)
 
-    latest = issues[0]
-    history = "\n".join(
-        f'<li><a href="{url(issue["html"])}"><time datetime="{issue["date"]}">{issue["date"]}</time> · 阅读日报</a></li>'
-        for issue in issues[1:])
-    history = f'<ul class="archive">{history}</ul>' if history else '<p class="muted">暂无更早期次。</p>'
+    tools = Path(__file__).parent
+    css = "\n".join((tools / name).read_text(encoding="utf-8") for name in ("style.css", "masthead.css")) + HOME_CSS
+    def row(issue, latest):
+        mark = ' id="latest-issue"' if latest else ""
+        tag = '<span class="tag">最新</span>' if latest else ""
+        return (f'<a class="issue"{mark} href="{url(issue["html"])}">'
+                f'<time class="d" datetime="{issue["date"]}">{cn_date(issue["date"], False)}</time>'
+                f'<span class="w">{weekday(issue["date"])}</span>{tag}</a>')
+
+    rows = "\n".join(row(issue, i == 0) for i, issue in enumerate(issues))
     return f'''<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{NAME} · {SUBTITLE}</title>
 <link rel="icon" href="data:,">
 <style>
-:root {{ color-scheme: light dark; --paper: #faf8f4; --ink: #24211e; --muted: #6b645c; --line: #d9d2c7; --card: #fffdf9; }}
-* {{ box-sizing: border-box; }}
-body {{ margin: 0; background: var(--paper); color: var(--ink); font-family: system-ui, "PingFang SC", sans-serif; line-height: 1.7; }}
-main {{ max-width: 680px; margin: 0 auto; padding: 48px 24px 72px; }}
-h1 {{ margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.7rem, 6vw, 2.2rem); }}
-.sub {{ margin: 4px 0 36px; color: var(--muted); }}
-h2 {{ font-size: 1.1rem; font-weight: 600; margin: 0 0 16px; }}
-p {{ margin: 12px 0; }}
-a {{ color: inherit; text-underline-offset: 4px; }}
-a:focus-visible {{ outline: 3px solid currentColor; outline-offset: 5px; }}
-.latest {{ padding: 24px; border: 1px solid var(--line); background: var(--card); border-radius: 4px; }}
-.date {{ font-size: 1.8rem; font-variant-numeric: tabular-nums; margin: 0 0 22px; }}
-.read {{ display: inline-flex; align-items: center; min-height: 48px; padding: 8px 18px; background: var(--ink); color: var(--paper); border-radius: 3px; text-decoration: none; }}
-.history {{ margin-top: 38px; }}
-.archive {{ padding: 0; margin: 0; list-style: none; }}
-.archive li {{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }}
-.archive li > a:first-child {{ display: inline-flex; align-items: center; gap: .35em; min-height: 44px; }}
-.muted {{ color: var(--muted); }}
-@media (prefers-color-scheme: dark) {{ :root {{ --paper: #1f1d1a; --ink: #f1e9df; --muted: #b9b0a5; --line: #514b43; --card: #27241f; }} }}
-@media (max-width: 400px) {{ main {{ padding: 30px 16px 48px; }} .latest {{ padding: 20px; }} }}
+{css}
 </style>
+<script>
+{(tools / "theme.js").read_text(encoding="utf-8")}
+</script>
 </head>
-<body>
-<main>
-<h1>{NAME}</h1>
-<p class="sub">{SUBTITLE}</p>
-<section class="latest" aria-labelledby="latest-heading">
-<h2 id="latest-heading">最新一期</h2>
-<p class="date"><time datetime="{latest["date"]}">{latest["date"]}</time></p>
-<a class="read" id="latest-issue" href="{url(latest["html"])}" aria-label="阅读 {latest["date"]} 日报">阅读日报 →</a>
-</section>
-<section class="history" aria-labelledby="history-heading">
-<h2 id="history-heading">往期日报</h2>
-{history}
-</section>
+<body class="home">
+<main class="home-in">
+{masthead(SUBTITLE, f"共 {len(issues)} 期")}
+<nav class="issues" aria-label="各期日报">
+{rows}
+</nav>
 </main>
 </body>
 </html>
@@ -117,7 +124,7 @@ def main(argv=None):
     try:
         root = args.root.resolve()
         issues = editions(root)
-        text = render(issues)
+        text, _ = embed(render(issues))
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", newline="\n",
                                          dir=root, suffix=".tmp", delete=False) as tmp:
             staged = Path(tmp.name)

@@ -120,7 +120,7 @@ class PipelineTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
 
     def test_offline_audit_rejects_css_and_relative_resources(self):
-        html = '<section class="pg pg-cover" id="p0"></section><a id="to-toc" href="#p0"></a>'
+        html = '<section class="pg pg-cover" id="p0"></section>'
         for resource in ('<img src="missing.png">', '<style>.x{background:url(https://example.invalid/p.png)}</style>'):
             with self.subTest(resource=resource):
                 with self.assertRaisesRegex(ValueError, "资源"):

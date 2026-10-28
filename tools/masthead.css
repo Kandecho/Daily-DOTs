@@ -1,0 +1,49 @@
+/* 报头：首页和目录页共用。刊名下的双线是地平线：白天一枚小太阳停在双线左端；点报头，它沿双线走到右端，
+   途中光芒收起、被影子遮成月牙，夜色跟在后面铺过整页（theme.js 用 View Transitions 做铺开）。再点一次走回来。
+   日月的大小 --rs；光芒外圈半径是 --rs 的 0.4 倍，底边贴着双线，左右停在双线两端。 */
+:root {
+  --rs: 34px; --run-c: #c4402a;
+  --run-x: calc(var(--rs) * -.1); --run-turn: 0deg; --rays-o: 1; --rays-s: 1; --bite-x: 14px; --body-x: 0px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --run-c: #ece3c4; --run-x: calc(100% - var(--rs) * .9); --run-turn: 360deg; --rays-o: 0; --rays-s: .7; --bite-x: 4.4px; --body-x: 1.6px;
+  }
+}
+:root[data-theme="dark"] {
+  --run-c: #ece3c4; --run-x: calc(100% - var(--rs) * .9); --run-turn: 360deg; --rays-o: 0; --rays-s: .7; --bite-x: 4.4px; --body-x: 1.6px;
+}
+
+.mast { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mast .dateline { position: relative; }
+.runner {
+  position: absolute; z-index: 2; left: var(--run-x); bottom: calc(100% + 3px - var(--rs) * .1);
+  width: var(--rs); height: var(--rs); padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--run-c); transform: rotate(var(--run-turn)); view-transition-name: dots-runner;
+}
+.runner:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 50%; }
+.runner svg { display: block; width: 100%; height: 100%; overflow: visible; }
+/* 光芒：pathLength 48 分 8 段，八道等距，从正右方起 */
+.runner .rays {
+  fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 1.4 4.6; stroke-dashoffset: .7; stroke-linecap: round;
+  opacity: var(--rays-o); transform: scale(var(--rays-s)); transform-origin: 0 0;
+}
+/* 月牙：影子从正右方进来，开口朝右、上下对称；亮面右移一点，看上去落在中心 */
+.runner .bite { transform: translate(var(--bite-x), 0); }
+.runner .body { transform: translate(var(--body-x), 0); }
+
+.ready .runner { transition: left 1s cubic-bezier(.65, 0, .35, 1), color 1s ease, transform 1s cubic-bezier(.65, 0, .35, 1); }
+.ready .runner .rays { transition: opacity .5s ease, transform 1s cubic-bezier(.65, 0, .35, 1); }
+.ready .runner .bite, .ready .runner .body { transition: transform 1s cubic-bezier(.65, 0, .35, 1); }
+
+/* 整页铺开由 theme.js 给新页面加 clip-path 动画；日月单独成层，保持实时，自己走过去 */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-group(dots-runner), ::view-transition-new(dots-runner) { animation: none; }
+::view-transition-old(dots-runner) { display: none; }
+
+/* 不支持 View Transitions 的浏览器：整页颜色淡入淡出 */
+.theme-fade body, .theme-fade .pg, .theme-fade .dateline, .theme-fade .ov-row, .theme-fade .issue, .theme-fade .to-toc, .theme-fade .to-home {
+  transition: background-color .6s ease, color .6s ease, border-color .6s ease;
+}
+@media (prefers-reduced-motion: reduce) { .ready .runner, .ready .runner * { transition: none; } }
+@media print { .runner { display: none; } }

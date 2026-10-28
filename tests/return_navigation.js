@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const html = fs.readFileSync(path.join(__dirname, '../tools/flip.html'), 'utf8');
-const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('getElementById("deck")'));
 const listeners = {};
 const pages = Array.from({ length: 7 }, () => ({ scrollTop: 80, classList: { contains: () => false } }));
 const deck = { children: pages, clientWidth: 390, scrollLeft: 0, addEventListener() {},
@@ -20,7 +20,7 @@ vm.runInNewContext(script, {
 });
 function click(id, href) {
   let prevented = false;
-  listeners.click({ target: { closest: () => ({ id, getAttribute: () => href }) },
+  listeners.click({ target: { closest: () => ({ classList: { contains: c => c === id }, getAttribute: () => href }) },
     preventDefault() { prevented = true; } });
   return prevented;
 }

@@ -289,9 +289,10 @@ def strip_shell(doc):
 
 def fill_template(name, fill, extra_css=None):
     css = (HERE / "style.css").read_text(encoding="utf-8")
-    if extra_css:
-        css += "\n" + (HERE / extra_css).read_text(encoding="utf-8")
+    for extra in [extra_css] if isinstance(extra_css, str) else extra_css or []:
+        css += "\n" + (HERE / extra).read_text(encoding="utf-8")
     page = (HERE / name).read_text(encoding="utf-8").replace("{{STYLE}}", css)
+    page = page.replace("{{THEME_JS}}", (HERE / "theme.js").read_text(encoding="utf-8"))
     for k, v in fill.items():
         page = page.replace(k, v)
     return page
