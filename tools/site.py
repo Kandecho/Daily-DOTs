@@ -43,8 +43,7 @@ def editions(root):
         match = re.search(r"(\d{4})年(\d{1,2})月(\d{1,2})日", title[1]) if title else None
         if not match or dt.date(*map(int, match.groups())).isoformat() != date:
             raise ValueError(f"{date} HTML 标题日期与期目录不一致")
-        found.append({"date": date, "html": html.relative_to(root).as_posix(),
-                      "draft": draft.relative_to(root).as_posix()})
+        found.append({"date": date, "html": html.relative_to(root).as_posix()})
     if not found:
         raise ValueError("editions/ 中没有可发布的完整期次")
     return found
@@ -57,8 +56,7 @@ def render(issues):
 
     latest = issues[0]
     history = "\n".join(
-        f'<li><a href="{url(issue["html"])}"><time datetime="{issue["date"]}">{issue["date"]}</time> · 阅读日报</a>'
-        f'<a class="source" href="{url(issue["draft"])}">原稿</a></li>'
+        f'<li><a href="{url(issue["html"])}"><time datetime="{issue["date"]}">{issue["date"]}</time> · 阅读日报</a></li>'
         for issue in issues[1:])
     history = f'<ul class="archive">{history}</ul>' if history else '<p class="muted">暂无更早期次。</p>'
     return f'''<!doctype html>
@@ -82,7 +80,6 @@ a:focus-visible {{ outline: 3px solid currentColor; outline-offset: 5px; }}
 .latest {{ padding: 24px; border: 1px solid var(--line); background: var(--card); border-radius: 4px; }}
 .date {{ font-size: 1.8rem; font-variant-numeric: tabular-nums; margin: 0 0 22px; }}
 .read {{ display: inline-flex; align-items: center; min-height: 48px; padding: 8px 18px; background: var(--ink); color: var(--paper); border-radius: 3px; text-decoration: none; }}
-.source {{ display: inline-flex; align-items: center; min-height: 44px; margin-left: 18px; color: var(--muted); font-size: .95rem; }}
 .history {{ margin-top: 38px; }}
 .archive {{ padding: 0; margin: 0; list-style: none; }}
 .archive li {{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }}
@@ -100,7 +97,6 @@ a:focus-visible {{ outline: 3px solid currentColor; outline-offset: 5px; }}
 <h2 id="latest-heading">最新一期</h2>
 <p class="date"><time datetime="{latest["date"]}">{latest["date"]}</time></p>
 <a class="read" id="latest-issue" href="{url(latest["html"])}" aria-label="阅读 {latest["date"]} 日报">阅读日报 →</a>
-<a class="source" href="{url(latest["draft"])}">原稿</a>
 </section>
 <section class="history" aria-labelledby="history-heading">
 <h2 id="history-heading">往期日报</h2>

@@ -61,6 +61,8 @@ class SiteTests(unittest.TestCase):
         self.assertIn("2099-01-01", text)
         self.assertIn("2098-12-31", text)
         self.assertNotIn("今日", text)
+        self.assertIn("<h1>Daily DOTs</h1>", text)
+        self.assertEqual(len(links), 2, "只链接两期日报，不链接原稿")
         for link in links:
             url = urlsplit(urljoin("https://example.invalid/Daily-DOTs/", link["href"]))
             self.assertEqual(url.netloc, "example.invalid")
