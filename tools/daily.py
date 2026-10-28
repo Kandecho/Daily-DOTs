@@ -111,8 +111,8 @@ def audit_html(raw, rendered, day):
     cover = re.search(r'<section class="pg pg-cover".*?</section>', rendered, re.S)[0]
     if any(f'class="{name}"' in cover for name in ("edition-note", "ov-note", "ov-src", "ov-hint")):
         raise ValueError("目录中混入制作说明或导语")
-    if not re.search(r'<a\b[^>]*id="to-toc"[^>]*href="#p0"', rendered):
-        raise ValueError("缺少原生回目录锚点")
+    if len(re.findall(r'<a class="to-toc" href="#p0">', rendered)) != len(day["items"]):
+        raise ValueError("每个条目页都要有原生回目录锚点")
     return {"source_links": sum(want_links.values()), "story_pages": len(day["items"]),
             "source_blocks": "pass", "source_urls": "pass", "local_resources": "pass",
             "navigation_targets": "pass", "home_link": "pass", "clean_cover": "pass", "native_return_anchor": "pass",

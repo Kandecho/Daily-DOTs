@@ -108,20 +108,45 @@ class DailyTests(unittest.TestCase):
             for b in boxes[i + 1:]:
                 self.assertFalse(a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3], (a, b))
 
-    def test_return_link_is_always_visible_safe_area_aware_and_touch_sized(self):
-        template = (ROOT / "tools/flip.html").read_text(encoding="utf-8")
-        css = (ROOT / "tools/flip.css").read_text(encoding="utf-8")
-        screen_css = css.split("@media print")[0]
-        attrs = [a for tag, a in Tags(template).tags if a.get("id") == "to-toc"]
-        self.assertEqual(len(attrs), 1)
-        self.assertEqual(attrs[0].get("href"), "#p0")
-        self.assertNotIn("hidden", attrs[0])
-        self.assertNotRegex(screen_css, r"[^{}]*\.to-toc[^{}]*\{[^}]*display:\s*none")
-        rule = re.search(r"\.to-toc\s*\{([^}]+)\}", screen_css)[1]
-        for declaration in ("position: fixed", "display: inline-flex", "min-height: 44px", "min-width: 44px", "env(safe-area-inset-bottom, 0px)"):
-            self.assertIn(declaration, rule)
-        self.assertIn("viewport-fit=cover", template)
-        self.assertRegex(screen_css, r"padding-bottom:\s*calc\(96px \+ env\(safe-area-inset-bottom, 0px\)\)")
+    def render_sample(self):
+        doc, rep, raw = core.parse_file(DRAFT)
+        day = doc["days"][0]
+        geo = Geo()
+        layout, rep = sheet.load(None, day, geo, {day["date"]: {"1", "2", "3", "4", "5", "x"}})
+        return flip.render_flip_day(geo, day, layout, {"standalone": True}, DRAFT.name), day
+
+    def test_each_page_has_its_own_bottom_button(self):
+        html, day = self.render_sample()
+        # 条目里还嵌着小节 <section>，按每页开头切分，而不是找配对的结束标签
+        pages = re.findall(r'<section class="pg[^"]*" id="p(\d+)">(.*?)(?=<section class="pg[ "]|</main>)', html, re.S)
+        self.assertEqual(len(pages), len(day["items"]) + 1)
+        for n, body in pages:
+            foot = re.findall(r'<p class="pg-foot"><a class="(to-home|to-toc)" href="([^"]+)">', body)
+            want = ("to-home", core.HOME_HREF) if n == "0" else ("to-toc", "#p0")
+            self.assertEqual(foot, [want], f"p{n}")
+        css = (ROOT / "tools/flip.css").read_text(encoding="utf-8").split("@media print")[0]
+        foot_rule = re.search(r"\.pg-foot\s*\{([^}]+)\}", css)[1]
+        for declaration in ("position: sticky", "bottom: 0", "margin: auto 0 0", "env(safe-area-inset-bottom, 0px)"):
+            self.assertIn(declaration, foot_rule)
+        button_rule = re.search(r"\.to-toc, \.to-home\s*\{([^}]+)\}", css)[1]
+        for declaration in ("display: inline-flex", "min-height: 44px", "min-width: 44px"):
+            self.assertIn(declaration, button_rule)
+        self.assertIn("viewport-fit=cover", (ROOT / "tools/flip.html").read_text(encoding="utf-8"))
+
+    def test_masthead_switch_is_shared_and_degrades(self):
+        html, _ = self.render_sample()
+        cover = re.search(r'<section class="pg pg-cover".*?</section>', html, re.S)[0]
+        self.assertIn('<div class="mast"><h1 class="nameplate">Daily DOTs</h1><div class="dateline">', cover)
+        self.assertEqual(html.count('<button class="runner" id="theme" type="button"'), 1)
+        self.assertNotIn('class="mast-nav"', cover)
+        css = (ROOT / "tools/masthead.css").read_text(encoding="utf-8")
+        dark = re.findall(r':root\[data-theme="dark"\]\s*\{([^}]+)\}', css)[0]
+        for token in ("--run-x", "--run-turn", "--rays-o", "--bite-x", "--body-x"):
+            self.assertIn(token, css.split("@media")[0])
+            self.assertIn(token, dark)
+        js = (ROOT / "tools/theme.js").read_text(encoding="utf-8")
+        for needed in ("startViewTransition", "prefers-reduced-motion", "theme-fade", "newsfmt-theme"):
+            self.assertIn(needed, js)
 
     def test_return_link_preserves_native_anchor_navigation(self):
         result = subprocess.run(["node", str(ROOT / "tests/return_navigation.js")], text=True, capture_output=True)

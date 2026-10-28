@@ -8,22 +8,16 @@
 <style>
 {{STYLE}}
 </style>
+<script>
+{{THEME_JS}}
+</script>
 </head>
 <body class="flip">
 <main class="deck" id="deck">
 {{PAGES}}
 </main>
-<a class="to-toc" id="to-toc" href="#p0">回到目录</a>
 <script>
 (function () {
-  var root = document.documentElement, btn = document.getElementById("theme");
-  try { var t = localStorage.getItem("newsfmt-theme"); if (t) root.dataset.theme = t; } catch (e) {}
-  btn.addEventListener("click", function () {
-    var dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-    root.dataset.theme = dark ? "light" : "dark";
-    try { localStorage.setItem("newsfmt-theme", root.dataset.theme); } catch (e) {}
-  });
-
   // 翻页：横向 scroll-snap 负责滑动；方向键和目录链接换算成页码再滚动
   var deck = document.getElementById("deck"), pages = deck.children;
   var smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -46,7 +40,7 @@
     var a = e.target.closest && e.target.closest('a[href^="#p"]');
     if (!a) return;
     // 回目录保留原生锚点跳转，不依赖 scrollTo 或脚本状态；脚本可用时顺便复位目录页内滚动。
-    if (a.id === "to-toc") { pages[0].scrollTop = 0; return; }
+    if (a.classList.contains("to-toc")) { pages[0].scrollTop = 0; return; }
     e.preventDefault();
     go(+a.getAttribute("href").slice(2));
   });

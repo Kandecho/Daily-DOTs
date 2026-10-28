@@ -32,7 +32,7 @@ python -m venv .venv && . .venv/bin/activate   # Windows: .venv\Scripts\activate
 python -m pip install -r requirements.txt
 
 python tools/daily.py editions/YYYY-MM-DD/原稿_YYYY-MM-DD.md   # 生成这一期的 HTML
-python tools/site.py                                            # 刷新首页
+python tools/site.py                                            # 刷新首页（同样需要字体）
 python -m unittest discover -s tests                            # 改了程序或模板时
 ```
 

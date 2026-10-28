@@ -27,14 +27,15 @@ def render_flip_day(geo, day, layout, nav, source_name):
     next_a = f'<a href="{nav["next"]}.html">{cn_date(nav["next"], False)} ›</a>' if nav.get("next") else "<span></span>"
     n_main = sum(1 for i in items if i["kind"] == "main")
     count = f"{n_main}+1 条" if n_main < len(items) else f"{n_main} 条"
-    archive = f'<a href="{HOME_HREF}">首页</a>' if nav.get("standalone") else '<a href="../index.html">往期</a>'
+    home = HOME_HREF if nav.get("standalone") else "../index.html"
+    # 单期成品没有前后日导航；旧的多日构建仍保留。
+    mast_nav = "" if nav.get("standalone") else f'<nav class="mast-nav">{prev_a}<span class="mid"></span>{next_a}</nav>'
+    dateline = f'{SUBTITLE} · {cn_date(day["date"])} {weekday(day["date"])}'
     cover = (
         f'<section class="pg pg-cover" id="{page_id(0)}"><div class="pg-in">'
-        f'<nav class="mast-nav">{prev_a}<span class="mid">{archive}'
-        f'<button type="button" id="theme">明暗</button></span>{next_a}</nav>'
-        f'<h1 class="nameplate">{NAME}</h1>'
-        f'<div class="dateline"><span>{SUBTITLE} · {cn_date(day["date"])} {weekday(day["date"])}</span><span>{count}</span></div>'
+        f'{mast_nav}{masthead(dateline, count)}'
         f'<nav class="ov" aria-label="目录">{"".join(rows)}</nav>'
+        f'<p class="pg-foot"><a class="to-home" href="{home}">回到首页</a></p>'
         f'</div></section>')
 
     # 第 1…N 页：一条一页
@@ -53,13 +54,28 @@ def render_flip_day(geo, day, layout, nav, source_name):
             f'<p class="kicker"><span class="no">{"探索位" if x else it["number"]}</span>'
             f'<span class="domain">{esc(it["domain"])}</span>{fol}</p>'
             f'<h2 class="hl">{inline(it["title"])}</h2>{art}{render_body(it, issue=st["issue"])}</article>'
+            f'<p class="pg-foot"><a class="to-toc" href="#{page_id(0)}">回到目录</a></p>'
             f'</div></section>')
 
     fill = {
         "{{TITLE}}": esc(f"{NAME}｜{cn_date(day['date'])}"),
         "{{PAGES}}": "\n".join(pages),
     }
-    return fill_template("flip.html", fill, extra_css="flip.css")
+    return fill_template("flip.html", fill, extra_css=["masthead.css", "flip.css"])
+
+
+def masthead(left, right):
+    """首页和目录页共用的报头：刊名、日期线，和坐在双线上的日月。样式在 masthead.css，切换在 theme.js。"""
+    return (f'<div class="mast"><h1 class="nameplate">{NAME}</h1>'
+            f'<div class="dateline"><span>{left}</span><span>{right}</span>{RUNNER}</div></div>')
+
+
+# 一枚圆点：白天带一圈光芒；入夜时影子从右边移进来，把它遮成月牙。
+RUNNER = ('<button class="runner" id="theme" type="button" aria-label="切换明暗"><svg viewBox="-13 -13 26 26" aria-hidden="true">'
+          '<defs><mask id="dots-bite" maskUnits="userSpaceOnUse" x="-13" y="-13" width="26" height="26">'
+          '<rect x="-13" y="-13" width="26" height="26" fill="#fff"/><circle class="bite" r="5.2" fill="#000"/></mask></defs>'
+          '<circle class="rays" r="9.6" pathLength="48"/>'
+          '<g class="body"><circle r="5.2" fill="currentColor" mask="url(#dots-bite)"/></g></svg></button>')
 
 
 def follow_page(f, nav):
