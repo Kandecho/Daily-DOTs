@@ -1,6 +1,7 @@
 """TEST edition fixtures only; exercise the static Pages entry CLI offline."""
 from html.parser import HTMLParser
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -9,6 +10,8 @@ import unittest
 from urllib.parse import unquote, urljoin, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
+# Child CLIs print Chinese; force UTF-8 pipes so tests also run on Windows.
+UTF8_ENV = {**os.environ, "PYTHONUTF8": "1"}
 
 
 class Links(HTMLParser):
@@ -43,7 +46,8 @@ class SiteTests(unittest.TestCase):
 
     def run_site(self):
         return subprocess.run([sys.executable, str(ROOT / "tools/site.py"), "--root", str(self.root)],
-                              cwd="/tmp", capture_output=True, text=True)
+                              cwd=tempfile.gettempdir(), capture_output=True, text=True,
+                              encoding="utf-8", env=UTF8_ENV)
 
     def test_latest_is_real_date_and_all_links_stay_under_project_prefix(self):
         self.edition("2098-12-31", legacy=True)
@@ -81,12 +85,12 @@ class SiteTests(unittest.TestCase):
         result = self.run_site()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertNotIn("Traceback", result.stderr)
-        self.assertEqual((self.root / "index.html").read_text(), "TEST previous homepage")
+        self.assertEqual((self.root / "index.html").read_text(encoding="utf-8"), "TEST previous homepage")
 
     def test_metadata_date_mismatch_is_rejected(self):
         self.edition("2098-12-31")
         draft = self.root / "editions/2098-12-31/原稿_2098-12-31.md"
-        draft.write_text(draft.read_text().replace("2098-12-31", "2099-01-01"))
+        draft.write_text(draft.read_text(encoding="utf-8").replace("2098-12-31", "2099-01-01"))
         result = self.run_site()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertNotIn("Traceback", result.stderr)
@@ -102,7 +106,7 @@ class SiteTests(unittest.TestCase):
 
     def test_html_date_mismatch_is_rejected(self):
         issue = self.edition("2098-12-31")
-        issue.write_text(issue.read_text().replace("2098年12月31日", "2099年1月1日"))
+        issue.write_text(issue.read_text(encoding="utf-8").replace("2098年12月31日", "2099年1月1日"))
         result = self.run_site()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertNotIn("Traceback", result.stderr)
