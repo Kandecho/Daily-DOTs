@@ -45,6 +45,7 @@ def test_draft(path, date="2098-12-31", count=3, mutate=None):
 
 class PipelineTests(unittest.TestCase):
     def setUp(self):
+        (ROOT / "_build").mkdir(exist_ok=True)
         self.tmp = tempfile.TemporaryDirectory(prefix="TEST_pipeline_", dir=ROOT / "_build")
         self.work = Path(self.tmp.name)
 

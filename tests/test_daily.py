@@ -34,6 +34,7 @@ class Tags(HTMLParser):
 
 class DailyTests(unittest.TestCase):
     def test_build_command_outputs_only_flip_beside_the_manuscript(self):
+        (ROOT / "_build").mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(dir=ROOT / "_build") as tmp:
             result = subprocess.run([sys.executable, str(ROOT / "tools/daily.py"), str(DRAFT),
                                      "--out", str(Path(tmp) / "试读.html"), "--build-dir", str(Path(tmp) / "internal")],

@@ -14,6 +14,8 @@
 | `NotoSerifCJK-Bold.ttc` | 2.003 | `1505ee3b9c0890fae6302ee0e9c6fd74d690f4a55a6ace1d9944f3f6352d622d` |
 | `NotoSansCJK-Regular.ttc` | 2.004 | `b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a` |
 
+固定版本下载：[Serif 2.003](https://github.com/notofonts/noto-cjk/raw/Serif2.003/Serif/OTC/NotoSerifCJK-Bold.ttc)、[Sans 2.004](https://github.com/notofonts/noto-cjk/raw/Sans2.004/Sans/OTC/NotoSansCJK-Regular.ttc)。`python tools/fetch_fonts.py` 下载缺失文件，并校验所有文件（包括缓存）；校验失败不替换已有文件。
+
 两份完整字体共 46,881,836 字节（约 44.7 MiB）。不入 Git 是体积取舍，不改变字体许可；本地字体和离线生成能力保留。更新字体可能改变子集字节和排版细节，需重新验证。
 
 ## Natural Earth 地图
