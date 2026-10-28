@@ -4,6 +4,17 @@ import datetime as dt
 import re
 from pathlib import Path
 
+# 刊名只在这里定义：报头和网页标题用 NAME；SUBTITLE 是副题，也是每期原稿 title 和成品文件名前缀。
+NAME = "Daily DOTs"
+SUBTITLE = "全球晚间新闻"
+# 每期成品位于 editions/YYYY-MM-DD/，回首页的唯一站内链接。
+HOME_HREF = "../../index.html"
+
+
+def edition_html_name(date):
+    return f"{SUBTITLE}_{date}_翻页.html"
+
+
 MAX_MAIN = 5
 MAX_EXPLORE = 1
 WEEKDAYS = "一二三四五六日"

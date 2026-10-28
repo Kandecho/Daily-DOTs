@@ -18,14 +18,14 @@ import page
 
 def test_draft(path, date="2098-12-31", count=3, mutate=None):
     ids = [f"test-{n}" for n in range(1, count + 1)]
-    meta = {"schema_version": 1, "issue_date": date, "title": "TEST 虚构技术烟雾",
+    meta = {"schema_version": 1, "issue_date": date, "title": "全球晚间新闻",
             "cutoff": date + " 22:55 北京时间",
             "layout": {"schema_version": 1, "template": "claude-flip-v1", "order": ids,
                        "shared_map": "tools/data/ne_110m_countries.geojson",
                        "stories": [{"story_id": sid, "components": []} for sid in ids]}}
     if mutate:
         mutate(meta)
-    body = f"# TEST 虚构技术烟雾 {date}\n\n"
+    body = f"# 全球晚间新闻 {date}\n\n"
     for n, sid in enumerate(ids, 1):
         info = {"id": sid, "number": str(n), "category": f"TEST领域{n}", "exploration": False}
         body += (f'<!-- story {json.dumps(info, ensure_ascii=False)} -->\n'
@@ -73,7 +73,7 @@ class PipelineTests(unittest.TestCase):
             draft = test_draft(self.work / date / "TEST.md", date=date)
             out = draft.with_suffix(".html")
             self.assert_success(self.run_daily(draft, "--out", out))
-            self.assertNotRegex(out.read_text(encoding="utf-8"), r'href="(?:\.\./|209[89]-)')
+            self.assertNotRegex(out.read_text(encoding="utf-8"), r'href="(?!\.\./\.\./index\.html")(?:\.\./|209[89]-)')
 
     def test_missing_metadata_title_reports_clean_error(self):
         draft = test_draft(self.work / "TEST.md", mutate=lambda m: m.pop("title"))

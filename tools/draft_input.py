@@ -6,7 +6,7 @@ import datetime as dt
 import json
 import re
 
-from core import Report, check_inline, parse_blocks, validate
+from core import SUBTITLE, Report, check_inline, parse_blocks, validate
 
 STORY = re.compile(r'^<!-- story (\{[^\n]+\}) -->\n(.*?)^<!-- endstory -->', re.M | re.S)
 BLOCK = re.compile(r'^<!-- block (\S+) (\S+) -->\s*$', re.M)
@@ -24,8 +24,8 @@ def parse(text, path):
         date = dt.date.fromisoformat(meta["issue_date"]).isoformat()
         if meta.get("schema_version") != 1:
             raise ValueError("只支持原稿 schema_version=1")
-        if not isinstance(meta["title"], str) or not meta["title"].strip():
-            raise ValueError("title 必须是非空字符串")
+        if meta["title"] != SUBTITLE:
+            raise ValueError(f"title 必须是“{SUBTITLE}”")
         layout = meta["layout"]
         if layout.get("schema_version") != 1 or layout.get("template") != "claude-flip-v1":
             raise ValueError("layout 需要 schema_version=1、template=claude-flip-v1")

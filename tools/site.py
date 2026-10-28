@@ -13,6 +13,8 @@ import sys
 import tempfile
 from urllib.parse import quote
 
+from core import NAME, SUBTITLE, edition_html_name
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -24,9 +26,9 @@ def editions(root):
             continue
         date = dt.date.fromisoformat(folder.name).isoformat()
         draft = folder / f"原稿_{date}.md"
-        html = folder / f"全球晚间新闻_{date}_翻页.html"
+        html = folder / edition_html_name(date)
         if not draft.is_file() or sorted(folder.glob("*.html")) != [html]:
-            raise ValueError(f"{date} 需要一份同日期原稿和唯一的 全球晚间新闻_{date}_翻页.html")
+            raise ValueError(f"{date} 需要一份同日期原稿和唯一的 {html.name}")
         if any(p.is_symlink() or not p.resolve().is_relative_to(root.resolve()) for p in (folder, draft, html)):
             raise ValueError(f"{date} 不接受符号链接或项目以外的文件")
         raw = draft.read_text(encoding="utf-8")
@@ -65,13 +67,14 @@ def render(issues):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>全球晚间新闻 · 日报</title>
+<title>{NAME} · {SUBTITLE}</title>
 <style>
 :root {{ color-scheme: light dark; --paper: #faf8f4; --ink: #24211e; --muted: #6b645c; --line: #d9d2c7; --card: #fffdf9; }}
 * {{ box-sizing: border-box; }}
 body {{ margin: 0; background: var(--paper); color: var(--ink); font-family: system-ui, "PingFang SC", sans-serif; line-height: 1.7; }}
 main {{ max-width: 680px; margin: 0 auto; padding: 48px 24px 72px; }}
-h1 {{ margin: 0 0 36px; font-family: "Songti SC", "Noto Serif CJK SC", serif; font-size: clamp(1.7rem, 6vw, 2.2rem); }}
+h1 {{ margin: 0; font-family: "Songti SC", "Noto Serif CJK SC", serif; font-size: clamp(1.7rem, 6vw, 2.2rem); }}
+.sub {{ margin: 4px 0 36px; color: var(--muted); }}
 h2 {{ font-size: 1.1rem; font-weight: 600; margin: 0 0 16px; }}
 p {{ margin: 12px 0; }}
 a {{ color: inherit; text-underline-offset: 4px; }}
@@ -91,7 +94,8 @@ a:focus-visible {{ outline: 3px solid currentColor; outline-offset: 5px; }}
 </head>
 <body>
 <main>
-<h1>全球晚间新闻</h1>
+<h1>{NAME}</h1>
+<p class="sub">{SUBTITLE}</p>
 <section class="latest" aria-labelledby="latest-heading">
 <h2 id="latest-heading">最新一期</h2>
 <p class="date"><time datetime="{latest["date"]}">{latest["date"]}</time></p>

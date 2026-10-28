@@ -73,7 +73,10 @@ class DailyTests(unittest.TestCase):
         self.assertFalse(any(tag == "details" for tag, _ in tags))
         self.assertFalse(any(tag in ("script", "link", "img") and
                              any(str(a.get(k, "")).startswith("http") for k in ("src", "href")) for tag, a in tags))
-        self.assertNotIn('../index.html', html)
+        self.assertEqual([a["href"] for tag, a in tags if tag == "a" and not a.get("href", "").startswith(("#", "http"))],
+                         [core.HOME_HREF])
+        self.assertIn('<h1 class="nameplate">Daily DOTs</h1>', html)
+        self.assertIn("<title>Daily DOTs｜2026年10月27日</title>", html)
         self.assertNotIn("原期重制", html)
         wmo = re.search(r'<article class="story" id="s-4">(.*?)</article>', html, re.S)[1]
         self.assertIn("上线时刻无法独立核定", wmo)
@@ -87,7 +90,7 @@ class DailyTests(unittest.TestCase):
         layout, rep = sheet.load(None, day, geo, {day["date"]: {"1", "2", "3", "4", "5", "x"}})
         html = flip.render_flip_day(geo, day, layout, {"standalone": True}, DRAFT.name)
         cover = re.search(r'<section class="pg pg-cover".*?</section>', html, re.S)[0]
-        self.assertIn("2026年10月27日", cover)
+        self.assertIn("全球晚间新闻 · 2026年10月27日", cover)
         self.assertIn("5+1 条", cover)
         self.assertEqual(cover.count('class="ov-row'), 6)
         for text in ("旧期", "试读", "制作", "底稿", "本期记录", "截稿", "上线时刻", "左右滑动", "正文中的"):
