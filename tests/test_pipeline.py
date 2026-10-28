@@ -1,5 +1,6 @@
 """Synthetic TEST issues only: no news claims, network, or browser needed."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -7,6 +8,8 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+# Child CLIs print Chinese; force UTF-8 pipes so tests also run on Windows.
+UTF8_ENV = {**os.environ, "PYTHONUTF8": "1"}
 sys.path.insert(0, str(ROOT / "tools"))
 import core
 import daily
@@ -15,14 +18,14 @@ import page
 
 def test_draft(path, date="2098-12-31", count=3, mutate=None):
     ids = [f"test-{n}" for n in range(1, count + 1)]
-    meta = {"schema_version": 1, "issue_date": date, "title": "TEST 虚构技术烟雾",
+    meta = {"schema_version": 1, "issue_date": date, "title": "全球晚间新闻",
             "cutoff": date + " 22:55 北京时间",
             "layout": {"schema_version": 1, "template": "claude-flip-v1", "order": ids,
                        "shared_map": "tools/data/ne_110m_countries.geojson",
                        "stories": [{"story_id": sid, "components": []} for sid in ids]}}
     if mutate:
         mutate(meta)
-    body = f"# TEST 虚构技术烟雾 {date}\n\n"
+    body = f"# 全球晚间新闻 {date}\n\n"
     for n, sid in enumerate(ids, 1):
         info = {"id": sid, "number": str(n), "category": f"TEST领域{n}", "exploration": False}
         body += (f'<!-- story {json.dumps(info, ensure_ascii=False)} -->\n'
@@ -36,7 +39,7 @@ def test_draft(path, date="2098-12-31", count=3, mutate=None):
                  f'<!-- sources -->\n- [TEST 来源](https://example.invalid/test/{n})\n'
                  '<!-- endstory -->\n\n')
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text('---\n' + json.dumps(meta, ensure_ascii=False, indent=2) + '\n---\n\n' + body)
+    path.write_text('---\n' + json.dumps(meta, ensure_ascii=False, indent=2) + '\n---\n\n' + body, encoding="utf-8")
     return path
 
 
@@ -51,7 +54,8 @@ class PipelineTests(unittest.TestCase):
     def run_daily(self, draft, *args):
         return subprocess.run([sys.executable, str(ROOT / "tools/daily.py"), str(draft),
                                "--build-dir", str(self.work / "internal"), *map(str, args)],
-                              cwd="/tmp", capture_output=True, text=True)
+                              cwd=tempfile.gettempdir(), capture_output=True, text=True,
+                              encoding="utf-8", env=UTF8_ENV)
 
     def assert_success(self, result):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -62,14 +66,14 @@ class PipelineTests(unittest.TestCase):
                 draft = test_draft(self.work / str(count) / "TEST.md", count=count)
                 out = draft.with_suffix(".html")
                 self.assert_success(self.run_daily(draft, "--out", out))
-                self.assertEqual(out.read_text().count('<article class="story"'), count)
+                self.assertEqual(out.read_text(encoding="utf-8").count('<article class="story"'), count)
 
     def test_shared_build_directory_cannot_add_unshipped_cross_day_links(self):
         for date in ("2098-12-31", "2099-01-01"):
             draft = test_draft(self.work / date / "TEST.md", date=date)
             out = draft.with_suffix(".html")
             self.assert_success(self.run_daily(draft, "--out", out))
-            self.assertNotRegex(out.read_text(), r'href="(?:\.\./|209[89]-)')
+            self.assertNotRegex(out.read_text(encoding="utf-8"), r'href="(?!\.\./\.\./index\.html")(?:\.\./|209[89]-)')
 
     def test_missing_metadata_title_reports_clean_error(self):
         draft = test_draft(self.work / "TEST.md", mutate=lambda m: m.pop("title"))
@@ -94,10 +98,10 @@ class PipelineTests(unittest.TestCase):
     def test_changed_existing_output_needs_explicit_overwrite(self):
         draft = test_draft(self.work / "TEST.md")
         out = self.work / "TEST.html"
-        out.write_text("TEST prior output must survive")
+        out.write_text("TEST prior output must survive", encoding="utf-8")
         result = self.run_daily(draft, "--out", out)
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(out.read_text(), "TEST prior output must survive")
+        self.assertEqual(out.read_text(encoding="utf-8"), "TEST prior output must survive")
 
     def test_output_cannot_target_a_different_dated_edition(self):
         draft = test_draft(self.work / "TEST.md")
@@ -150,7 +154,7 @@ class PipelineTests(unittest.TestCase):
         original = out.read_bytes()
         self.assert_success(self.run_daily(draft, "--out", out))
         self.assertEqual(out.read_bytes(), original)
-        draft.write_text(draft.read_text().replace("核对来源与全文保留", "修改后的虚构测试段落"))
+        draft.write_text(draft.read_text(encoding="utf-8").replace("核对来源与全文保留", "修改后的虚构测试段落"), encoding="utf-8")
         denied = self.run_daily(draft, "--out", out)
         self.assertNotEqual(denied.returncode, 0)
         self.assertEqual(out.read_bytes(), original)
@@ -163,17 +167,17 @@ class PipelineTests(unittest.TestCase):
                 "highlights": [{"country_id": "COD"}, {"country_id": "KEN"}, {"country_id": "NGA"}],
                 "viewport": [-20, -36, 53, 38], "points": [], "caption": "TEST 虚构国家定位，不表示传播方向。"}]
         draft = test_draft(self.work / "TEST.md", date="2099-01-01", count=1, mutate=add_map)
-        draft.write_text(draft.read_text().replace("https://example.invalid/test/1", "https://example.invalid/test/1?a=1&b=2"))
+        draft.write_text(draft.read_text(encoding="utf-8").replace("https://example.invalid/test/1", "https://example.invalid/test/1?a=1&b=2"), encoding="utf-8")
         out = self.work / "TEST.html"
         self.assert_success(self.run_daily(draft, "--out", out))
-        html = out.read_text()
+        html = out.read_text(encoding="utf-8")
         self.assertIn("2099年1月1日 星期四", html)
         self.assertIn('<span class="dt past">2098年12月31日</span>', html)
         self.assertEqual(html.count('<figure class="fig fig-map">'), 1)
         self.assertIn('aria-label="定位图：刚果（金）、肯尼亚、尼日利亚"', html)
         self.assertNotIn('class="pt"', html)
         self.assertEqual(html.count("data:font/woff;base64,"), 2)
-        receipt = json.loads((self.work / "internal/verification.json").read_text())
+        receipt = json.loads((self.work / "internal/verification.json").read_text(encoding="utf-8"))
         self.assertEqual(receipt["source_links"], 1)
         self.assertEqual([f["missing_visible_chars"] for f in receipt["fonts"]], [0, 0])
 
@@ -181,20 +185,30 @@ class PipelineTests(unittest.TestCase):
         draft = test_draft(self.work / "TEST.md")
         out = self.work / "internal/dist/flip/2098-12-31.html"
         out.parent.mkdir(parents=True)
-        out.write_text("TEST prior published file must survive")
+        out.write_text("TEST prior published file must survive", encoding="utf-8")
         result = self.run_daily(draft, "--out", out)
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(out.read_text(), "TEST prior published file must survive")
+        self.assertEqual(out.read_text(encoding="utf-8"), "TEST prior published file must survive")
 
     def test_supported_lists_and_tables_preserve_visible_text(self):
         draft = test_draft(self.work / "TEST.md", count=1)
-        raw = draft.read_text().replace("TEST：核对来源与全文保留。", "- TEST 第一项\n- TEST 第二项\n\n1. TEST 顺序项\n\n| TEST 表头 |\n| --- |\n| TEST 单元格 |")
-        draft.write_text(raw)
+        raw = draft.read_text(encoding="utf-8").replace("TEST：核对来源与全文保留。", "- TEST 第一项\n- TEST 第二项\n\n1. TEST 顺序项\n\n| TEST 表头 |\n| --- |\n| TEST 单元格 |")
+        draft.write_text(raw, encoding="utf-8")
         out = self.work / "TEST.html"
         self.assert_success(self.run_daily(draft, "--out", out))
-        html = out.read_text()
+        html = out.read_text(encoding="utf-8")
         for expected in ("TEST 第一项", "TEST 第二项", "TEST 顺序项", "TEST 单元格"):
             self.assertIn(expected, html)
+
+    def test_empty_source_area_renders_no_sources_section(self):
+        draft = test_draft(self.work / "TEST.md", count=2)
+        raw = draft.read_text(encoding="utf-8").replace("- [TEST 来源](https://example.invalid/test/1)\n", "", 1)
+        draft.write_text(raw, encoding="utf-8")
+        out = self.work / "TEST.html"
+        self.assert_success(self.run_daily(draft, "--out", out))
+        html = out.read_text(encoding="utf-8")
+        self.assertEqual(html.count('class="sec sec-sources"'), 1)
+        self.assertIn("https://example.invalid/test/2", html)
 
 
 if __name__ == "__main__":

@@ -87,8 +87,9 @@ def audit_html(raw, rendered, day):
         raise ValueError("HTML ID 重复")
     if any(link.startswith("#") and link[1:] not in parsed.ids for link in parsed.links):
         raise ValueError("目录链接指向不存在的页")
-    if any(link and not link.startswith(("#", "http://", "https://")) for link in parsed.links):
-        raise ValueError("单文件存在依赖其他文件的链接")
+    local = [link for link in parsed.links if link and not link.startswith(("#", "http://", "https://"))]
+    if local != [core.HOME_HREF]:
+        raise ValueError(f"站内链接只允许一个回首页 {core.HOME_HREF}：{local}")
     # Independently compare every marked source paragraph/heading, so the bridge
     # cannot lose a block and still pass the renderer's own round-trip check.
     chunks = re.findall(r'<!-- story .*?-->\n(.*?)<!-- endstory -->', raw, re.S)
@@ -114,7 +115,7 @@ def audit_html(raw, rendered, day):
         raise ValueError("缺少原生回目录锚点")
     return {"source_links": sum(want_links.values()), "story_pages": len(day["items"]),
             "source_blocks": "pass", "source_urls": "pass", "local_resources": "pass",
-            "navigation_targets": "pass", "clean_cover": "pass", "native_return_anchor": "pass",
+            "navigation_targets": "pass", "home_link": "pass", "clean_cover": "pass", "native_return_anchor": "pass",
             "browser_visual_interaction": "not_run"}
 
 
@@ -142,7 +143,7 @@ def build(args):
     day = doc["days"][0]
     if args.date and dt.date.fromisoformat(args.date).isoformat() != day["date"]:
         raise ValueError("--date 与原稿 issue_date 不一致；不会替换原稿日期")
-    target = args.out or args.draft.with_name(f'全球晚间新闻_{day["date"]}_翻页.html')
+    target = args.out or args.draft.with_name(core.edition_html_name(day["date"]))
     if target.resolve() == args.draft.resolve() or target.suffix.lower() != ".html":
         raise ValueError("输出必须是独立 .html 文件，不能覆盖原稿")
     for path in (args.draft, target):

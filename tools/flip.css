@@ -13,7 +13,7 @@ body.flip { overflow: hidden; }
 .pg-in { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 
 /* 概览页 */
-.pg-cover .nameplate { margin-top: 8px; text-align: center; font-size: clamp(38px, 11vw, 56px); }
+.pg-cover .nameplate { margin-top: 8px; text-align: center; font-size: clamp(38px, 11vw, 56px); letter-spacing: .02em; padding-left: 0; }
 .pg-cover .dateline { justify-content: space-between; margin-top: 8px; padding: 5px 2px; font-size: 13px; }
 .ov { display: flex; flex-direction: column; margin-top: 6px; }
 .ov-row {

@@ -143,15 +143,24 @@ def map_svg(geo, spec):
              f'{esc("、".join(geo.countries[c]["name"] for c in codes) or "、".join(p["name"] for p in pts))}">',
              f'<rect class="sea" width="{W}" height="{H}"/>',
              f'<path class="land" d="{base}"/>', f'<path class="land-hl" d="{hl}"/>']
-    # 国名：标在 Natural Earth 给出的标注点上，落在画面外就不标
+    placed = []  # 已放标签的 (x0, y0, x1, y1)，按字数估宽；国名和地名共用，互不重叠
+    hit = lambda box: any(box[0] < b[2] and b[0] < box[2] and box[1] < b[3] and b[1] < box[3] for b in placed)
+    # 国名：标在 Natural Earth 给出的标注点上，落在画面外就不标；和前面的国名撞上就上下错开，错不开就不标
     for c in codes:
         lx, ly = geo.countries[c]["label"]
         if lx is None:
             continue
         x, y = pj(lx, ly)
-        if 30 < x < W - 30 and 20 < y < H - 20 and not any(math.hypot(*(a - b for a, b in zip(pj(p["lon"], p["lat"]), (x, y)))) < 70 for p in pts):
-            parts.append(f'<text class="cname" x="{x:.0f}" y="{y:.0f}" text-anchor="middle">{esc(geo.countries[c]["name"])}</text>')
-    placed = []  # 已放标签的 (x0, y0, x1, y1)，按字数估宽，撞上就换到另一侧
+        if not (30 < x < W - 30 and 20 < y < H - 20) or any(math.hypot(*(a - b for a, b in zip(pj(p["lon"], p["lat"]), (x, y)))) < 70 for p in pts):
+            continue
+        name = geo.countries[c]["name"]
+        w = 25 * len(name)  # 22px 字号加 .12em 字距
+        for dy in (0, 30, -30, 60, -60):
+            box = (x - w / 2, y + dy - 22, x + w / 2, y + dy + 6)
+            if box[1] > 0 and box[3] < H and not hit(box):
+                placed.append(box)
+                parts.append(f'<text class="cname" x="{x:.0f}" y="{y + dy:.0f}" text-anchor="middle">{esc(name)}</text>')
+                break
     for p in pts:
         x, y = pj(p["lon"], p["lat"])
         w = 23 * len(p["name"])
@@ -159,7 +168,7 @@ def map_svg(geo, spec):
         for anchor, dx in sides + [sides[0]]:
             x0 = x + dx if anchor == "start" else x + dx - w
             box = (x0, y - 14, x0 + w, y + 14)
-            if not any(box[0] < b[2] and b[0] < box[2] and box[1] < b[3] and b[1] < box[3] for b in placed):
+            if not hit(box):
                 break
         placed.append(box)
         parts.append(f'<circle class="pt" cx="{x:.1f}" cy="{y:.1f}" r="7"/>'

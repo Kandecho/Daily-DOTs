@@ -6,7 +6,7 @@ import datetime as dt
 import json
 import re
 
-from core import Report, check_inline, parse_blocks, validate
+from core import SUBTITLE, Report, check_inline, parse_blocks, validate
 
 STORY = re.compile(r'^<!-- story (\{[^\n]+\}) -->\n(.*?)^<!-- endstory -->', re.M | re.S)
 BLOCK = re.compile(r'^<!-- block (\S+) (\S+) -->\s*$', re.M)
@@ -24,8 +24,8 @@ def parse(text, path):
         date = dt.date.fromisoformat(meta["issue_date"]).isoformat()
         if meta.get("schema_version") != 1:
             raise ValueError("只支持原稿 schema_version=1")
-        if not isinstance(meta["title"], str) or not meta["title"].strip():
-            raise ValueError("title 必须是非空字符串")
+        if meta["title"] != SUBTITLE:
+            raise ValueError(f"title 必须是“{SUBTITLE}”")
         layout = meta["layout"]
         if layout.get("schema_version") != 1 or layout.get("template") != "claude-flip-v1":
             raise ValueError("layout 需要 schema_version=1、template=claude-flip-v1")
@@ -115,8 +115,11 @@ def parse(text, path):
                 current["blocks"].extend(parse_blocks(list(enumerate(value.splitlines(), start=no)), rep))
             else:
                 rep.error(no, f"{block_id}: 不支持的正文块或缺少小节标题：{kind}")
-        item["sections"].append({"key": "sources", "label": "来源", "raw_label": "来源", "line": no,
-                                 "blocks": parse_blocks(list(enumerate(sources.strip().splitlines(), start=no)), rep)})
+        # 来源区可以空着：页面上不出“来源”小节，也不写占位说明。
+        source_blocks = parse_blocks(list(enumerate(sources.strip().splitlines(), start=no)), rep)
+        if source_blocks:
+            item["sections"].append({"key": "sources", "label": "来源", "raw_label": "来源", "line": no,
+                                     "blocks": source_blocks})
         day["items"].append(item)
     order = meta.get("layout", {}).get("order")
     if len(ids) != len(set(ids)) or (order is not None and order != ids):

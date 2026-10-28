@@ -3,7 +3,7 @@
 与报纸版共用解析、核对、地图和数字上色；版面单里只用到地图和接续。
 """
 
-from core import cn_date, item_key, weekday
+from core import HOME_HREF, NAME, SUBTITLE, cn_date, item_key, weekday
 from page import esc, fill_template, inline, render_body, render_map, story_id
 
 
@@ -27,13 +27,13 @@ def render_flip_day(geo, day, layout, nav, source_name):
     next_a = f'<a href="{nav["next"]}.html">{cn_date(nav["next"], False)} ›</a>' if nav.get("next") else "<span></span>"
     n_main = sum(1 for i in items if i["kind"] == "main")
     count = f"{n_main}+1 条" if n_main < len(items) else f"{n_main} 条"
-    archive = '' if nav.get("standalone") else '<a href="../index.html">往期</a>'
+    archive = f'<a href="{HOME_HREF}">首页</a>' if nav.get("standalone") else '<a href="../index.html">往期</a>'
     cover = (
         f'<section class="pg pg-cover" id="{page_id(0)}"><div class="pg-in">'
         f'<nav class="mast-nav">{prev_a}<span class="mid">{archive}'
         f'<button type="button" id="theme">明暗</button></span>{next_a}</nav>'
-        f'<h1 class="nameplate">晚间简报</h1>'
-        f'<div class="dateline"><span>{cn_date(day["date"])} {weekday(day["date"])}</span><span>{count}</span></div>'
+        f'<h1 class="nameplate">{NAME}</h1>'
+        f'<div class="dateline"><span>{SUBTITLE} · {cn_date(day["date"])} {weekday(day["date"])}</span><span>{count}</span></div>'
         f'<nav class="ov" aria-label="目录">{"".join(rows)}</nav>'
         f'</div></section>')
 
@@ -56,7 +56,7 @@ def render_flip_day(geo, day, layout, nav, source_name):
             f'</div></section>')
 
     fill = {
-        "{{TITLE}}": esc(f"晚间简报｜{cn_date(day['date'])}"),
+        "{{TITLE}}": esc(f"{NAME}｜{cn_date(day['date'])}"),
         "{{PAGES}}": "\n".join(pages),
     }
     return fill_template("flip.html", fill, extra_css="flip.css")

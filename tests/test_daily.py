@@ -1,4 +1,5 @@
 """Small contract checks for the verified-draft bridge; no browser/network."""
+import os
 import re
 import sys
 import subprocess
@@ -9,6 +10,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# Child CLIs print Chinese; force UTF-8 pipes so tests also run on Windows.
+UTF8_ENV = {**os.environ, "PYTHONUTF8": "1"}
 sys.path.insert(0, str(ROOT / "tools"))
 import core
 import flip
@@ -34,9 +37,9 @@ class DailyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=ROOT / "_build") as tmp:
             result = subprocess.run([sys.executable, str(ROOT / "tools/daily.py"), str(DRAFT),
                                      "--out", str(Path(tmp) / "试读.html"), "--build-dir", str(Path(tmp) / "internal")],
-                                    text=True, capture_output=True)
+                                    text=True, capture_output=True, encoding="utf-8", env=UTF8_ENV)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            html = (Path(tmp) / "试读.html").read_text()
+            html = (Path(tmp) / "试读.html").read_text(encoding="utf-8")
             self.assertIn("刚果（金）、肯尼亚、尼日利亚", html)
             self.assertIn("不表示传播方向", html)
             self.assertEqual(html.count("data:font/woff;base64,"), 2)
@@ -70,7 +73,10 @@ class DailyTests(unittest.TestCase):
         self.assertFalse(any(tag == "details" for tag, _ in tags))
         self.assertFalse(any(tag in ("script", "link", "img") and
                              any(str(a.get(k, "")).startswith("http") for k in ("src", "href")) for tag, a in tags))
-        self.assertNotIn('../index.html', html)
+        self.assertEqual([a["href"] for tag, a in tags if tag == "a" and not a.get("href", "").startswith(("#", "http"))],
+                         [core.HOME_HREF])
+        self.assertIn('<h1 class="nameplate">Daily DOTs</h1>', html)
+        self.assertIn("<title>Daily DOTs｜2026年10月27日</title>", html)
         self.assertNotIn("原期重制", html)
         wmo = re.search(r'<article class="story" id="s-4">(.*?)</article>', html, re.S)[1]
         self.assertIn("上线时刻无法独立核定", wmo)
@@ -84,16 +90,27 @@ class DailyTests(unittest.TestCase):
         layout, rep = sheet.load(None, day, geo, {day["date"]: {"1", "2", "3", "4", "5", "x"}})
         html = flip.render_flip_day(geo, day, layout, {"standalone": True}, DRAFT.name)
         cover = re.search(r'<section class="pg pg-cover".*?</section>', html, re.S)[0]
-        self.assertIn("2026年10月27日", cover)
+        self.assertIn("全球晚间新闻 · 2026年10月27日", cover)
         self.assertIn("5+1 条", cover)
         self.assertEqual(cover.count('class="ov-row'), 6)
         for text in ("旧期", "试读", "制作", "底稿", "本期记录", "截稿", "上线时刻", "左右滑动", "正文中的"):
             with self.subTest(text=text):
                 self.assertNotIn(text, cover)
 
+    def test_country_labels_do_not_overlap(self):
+        from geo import map_svg
+        svg = map_svg(Geo(), {"countries": ["COD", "KEN", "NGA"], "view": [-20, -36, 53, 38]})
+        labels = [(float(x), float(y), name) for x, y, name in
+                  re.findall(r'<text class="cname" x="([\d.-]+)" y="([\d.-]+)"[^>]*>([^<]+)</text>', svg)]
+        self.assertEqual(sorted(n for _, _, n in labels), sorted(["刚果（金）", "肯尼亚", "尼日利亚"]))
+        boxes = [(x - 12.5 * len(n), y - 22, x + 12.5 * len(n), y + 6) for x, y, n in labels]
+        for i, a in enumerate(boxes):
+            for b in boxes[i + 1:]:
+                self.assertFalse(a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3], (a, b))
+
     def test_return_link_is_always_visible_safe_area_aware_and_touch_sized(self):
-        template = (ROOT / "tools/flip.html").read_text()
-        css = (ROOT / "tools/flip.css").read_text()
+        template = (ROOT / "tools/flip.html").read_text(encoding="utf-8")
+        css = (ROOT / "tools/flip.css").read_text(encoding="utf-8")
         screen_css = css.split("@media print")[0]
         attrs = [a for tag, a in Tags(template).tags if a.get("id") == "to-toc"]
         self.assertEqual(len(attrs), 1)

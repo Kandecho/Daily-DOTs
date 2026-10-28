@@ -6,11 +6,11 @@ import re
 from html.parser import HTMLParser
 from pathlib import Path
 
-from core import RE_LINK, body_plain, block_texts, cn_date, item_key, plain, weekday
+from core import NAME, RE_LINK, body_plain, block_texts, cn_date, item_key, plain, weekday
 from geo import map_svg
 
 HERE = Path(__file__).parent
-NAMEPLATE = "晚间简报"
+NAMEPLATE = NAME
 
 
 # 正文里的数字（可带千位逗号、小数、万/亿）默认上色；紧挨字母、连字符或“第”的是编号或序号，不算。
