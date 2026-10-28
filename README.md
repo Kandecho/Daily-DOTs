@@ -49,7 +49,7 @@ python -m unittest discover -s tests                           # 改了程序或
 
 ## 维护
 
-日常由 agent 维护，不绑定某一个。改动之前先读 [AGENTS.md](AGENTS.md) 和 [工作流程](docs/工作流程.md)。
+贡献与协作见 [贡献指南](CONTRIBUTING.md)，生成、检查和发布见 [工作流程](docs/工作流程.md)。
 
 ## 许可
 

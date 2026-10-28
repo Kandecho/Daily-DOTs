@@ -1,9 +1,8 @@
 # AGENTS.md
 
-这个仓库由不同的 agent 轮流维护，规则不依赖某一个 agent 或平台。
+开始工作前先读：
 
-- 怎么做事、什么能改、提交前查什么：[docs/工作流程.md](docs/工作流程.md)
+- 贡献范围、协作与提交规则：[CONTRIBUTING.md](CONTRIBUTING.md)
+- 生成、检查、提交与发布操作：[docs/工作流程.md](docs/工作流程.md)
 - 版面和原稿格式：[docs/排版约定.md](docs/排版约定.md)
-- 项目是什么、怎么生成：[README.md](README.md)
-
-这是仓库所有者自己读的日报。拿不准的事问所有者，不要代替所有者做编辑决定。
+- 项目介绍与上手：[README.md](README.md)
