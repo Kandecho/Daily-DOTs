@@ -66,12 +66,13 @@ def render(issues):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>{NAME} · {SUBTITLE}</title>
+<link rel="icon" href="data:,">
 <style>
 :root {{ color-scheme: light dark; --paper: #faf8f4; --ink: #24211e; --muted: #6b645c; --line: #d9d2c7; --card: #fffdf9; }}
 * {{ box-sizing: border-box; }}
 body {{ margin: 0; background: var(--paper); color: var(--ink); font-family: system-ui, "PingFang SC", sans-serif; line-height: 1.7; }}
 main {{ max-width: 680px; margin: 0 auto; padding: 48px 24px 72px; }}
-h1 {{ margin: 0; font-family: "Songti SC", "Noto Serif CJK SC", serif; font-size: clamp(1.7rem, 6vw, 2.2rem); }}
+h1 {{ margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.7rem, 6vw, 2.2rem); }}
 .sub {{ margin: 4px 0 36px; color: var(--muted); }}
 h2 {{ font-size: 1.1rem; font-weight: 600; margin: 0 0 16px; }}
 p {{ margin: 12px 0; }}
@@ -83,7 +84,7 @@ a:focus-visible {{ outline: 3px solid currentColor; outline-offset: 5px; }}
 .history {{ margin-top: 38px; }}
 .archive {{ padding: 0; margin: 0; list-style: none; }}
 .archive li {{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }}
-.archive li > a:first-child {{ display: inline-flex; align-items: center; min-height: 44px; }}
+.archive li > a:first-child {{ display: inline-flex; align-items: center; gap: .35em; min-height: 44px; }}
 .muted {{ color: var(--muted); }}
 @media (prefers-color-scheme: dark) {{ :root {{ --paper: #1f1d1a; --ink: #f1e9df; --muted: #b9b0a5; --line: #514b43; --card: #27241f; }} }}
 @media (max-width: 400px) {{ main {{ padding: 30px 16px 48px; }} .latest {{ padding: 20px; }} }}
