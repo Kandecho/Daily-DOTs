@@ -200,6 +200,16 @@ class PipelineTests(unittest.TestCase):
         for expected in ("TEST 第一项", "TEST 第二项", "TEST 顺序项", "TEST 单元格"):
             self.assertIn(expected, html)
 
+    def test_empty_source_area_renders_no_sources_section(self):
+        draft = test_draft(self.work / "TEST.md", count=2)
+        raw = draft.read_text(encoding="utf-8").replace("- [TEST 来源](https://example.invalid/test/1)\n", "", 1)
+        draft.write_text(raw, encoding="utf-8")
+        out = self.work / "TEST.html"
+        self.assert_success(self.run_daily(draft, "--out", out))
+        html = out.read_text(encoding="utf-8")
+        self.assertEqual(html.count('class="sec sec-sources"'), 1)
+        self.assertIn("https://example.invalid/test/2", html)
+
 
 if __name__ == "__main__":
     unittest.main()
