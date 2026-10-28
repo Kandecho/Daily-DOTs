@@ -1,5 +1,9 @@
 # Build products and local originals
 _build/
+/_site/
+/.site-*/
+/editions/**/*.html
+/index.html
 archive/
 dist/
 backups/
