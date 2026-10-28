@@ -97,6 +97,17 @@ class DailyTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertNotIn(text, cover)
 
+    def test_country_labels_do_not_overlap(self):
+        from geo import map_svg
+        svg = map_svg(Geo(), {"countries": ["COD", "KEN", "NGA"], "view": [-20, -36, 53, 38]})
+        labels = [(float(x), float(y), name) for x, y, name in
+                  re.findall(r'<text class="cname" x="([\d.-]+)" y="([\d.-]+)"[^>]*>([^<]+)</text>', svg)]
+        self.assertEqual(sorted(n for _, _, n in labels), sorted(["刚果（金）", "肯尼亚", "尼日利亚"]))
+        boxes = [(x - 12.5 * len(n), y - 22, x + 12.5 * len(n), y + 6) for x, y, n in labels]
+        for i, a in enumerate(boxes):
+            for b in boxes[i + 1:]:
+                self.assertFalse(a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3], (a, b))
+
     def test_return_link_is_always_visible_safe_area_aware_and_touch_sized(self):
         template = (ROOT / "tools/flip.html").read_text(encoding="utf-8")
         css = (ROOT / "tools/flip.css").read_text(encoding="utf-8")
