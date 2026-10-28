@@ -41,7 +41,7 @@ class DailyTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             html = (Path(tmp) / "试读.html").read_text(encoding="utf-8")
             self.assertIn("刚果（金）、肯尼亚、尼日利亚", html)
-            self.assertIn("不表示传播方向", html)
+            self.assertIn("着色为报道涉及国家，不代表疫情分布范围。", html)
             self.assertEqual(html.count("data:font/woff;base64,"), 2)
             self.assertIn("SIL OPEN FONT LICENSE Version 1.1", html)
             self.assertEqual(len(list(Path(tmp).glob("*.html"))), 1)
