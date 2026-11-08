@@ -1,6 +1,6 @@
 # Daily DOTs
 
-全球晚间新闻：每晚一期，最多 5 条主新闻加 1 条探索位，在手机上横向翻页、一条一页地读。这首先是我自己每天看的日报，公开只是为了方便阅读和维护。
+全球晚间新闻：每晚一期，最多 5 条主新闻加 1 条探索位（无合适探索时可用趣闻纸片页），在手机上横向翻页、一条一页地读。这首先是我自己每天看的日报，公开只是为了方便阅读和维护。
 
 **阅读：<https://kandecho.github.io/Daily-DOTs/>**
 
@@ -25,7 +25,7 @@ AGENTS.md              给维护 agent 的入口
 
 ## 本地生成与发布
 
-环境：Python 3.12 和 [`requirements.txt`](requirements.txt) 里的 fontTools；Node.js 只在跑测试时需要。两份字体不入 Git，版本和 SHA-256 见 [第三方资源说明](THIRD_PARTY_NOTICES.md)。
+环境：Python 3.12 和 [`requirements.txt`](requirements.txt) 里的 fontTools；Node.js 只在跑测试时需要。字体文件不入 Git，版本和 SHA-256 见 [第三方资源说明](THIRD_PARTY_NOTICES.md)。
 
 ```sh
 python -m venv .venv && . .venv/bin/activate   # Windows: .venv\Scripts\activate

@@ -18,10 +18,11 @@ def render_flip_day(geo, day, layout, nav, source_name):
     # 第 0 页：目录
     rows = []
     for n, it in enumerate(items, start=1):
-        x = it["kind"] == "explore"
+        x = it["kind"] in ("explore", "light")
+        label = "拾遗" if it["kind"] == "light" else "探索"
         rows.append(
             f'<a class="ov-row{" ov-x" if x else ""}" href="#{page_id(n)}">'
-            f'<span class="no">{"探索" if x else it["number"]}</span>'
+            f'<span class="no">{label if x else it["number"]}</span>'
             f'<span class="ov-t"><span class="domain">{esc(it["domain"])}</span> {inline(it["title"])}</span></a>')
     prev_a = f'<a href="{nav["prev"]}.html">‹ {cn_date(nav["prev"], False)}</a>' if nav.get("prev") else "<span></span>"
     next_a = f'<a href="{nav["next"]}.html">{cn_date(nav["next"], False)} ›</a>' if nav.get("next") else "<span></span>"
@@ -43,6 +44,10 @@ def render_flip_day(geo, day, layout, nav, source_name):
     for n, it in enumerate(items, start=1):
         key = item_key(it)
         st = S[key]
+        if it["kind"] == "light":
+            from light_page import render_light_page
+            pages.append(render_light_page(it, n))
+            continue
         x = it["kind"] == "explore"
         f = st.get("follows")
         fol = (f'<a class="follows" href="{f["date"]}.html#{page_id(follow_page(f, nav))}">续 {cn_date(f["date"], False)}</a>'
@@ -61,7 +66,17 @@ def render_flip_day(geo, day, layout, nav, source_name):
         "{{TITLE}}": esc(f"{NAME}｜{cn_date(day['date'])}"),
         "{{PAGES}}": "\n".join(pages),
     }
-    return fill_template("flip.html", fill, extra_css=["masthead.css", "flip.css"])
+    styles = ["masthead.css", "flip.css"]
+    has_light = any(it["kind"] == "light" for it in items)
+    if has_light:
+        styles.append("light_page.css")
+    result = fill_template("flip.html", fill, extra_css=styles)
+    if has_light:
+        # The existing navigation toggles on-x for the dark exploration page.
+        result = result.replace('document.body.classList.toggle("on-x", pages[i].classList.contains("pg-x"));',
+                                'document.body.classList.toggle("on-x", pages[i].classList.contains("pg-x"));\n'
+                                '    document.body.classList.toggle("on-light", pages[i].classList.contains("pg-light"));')
+    return result
 
 
 def masthead(left, right):

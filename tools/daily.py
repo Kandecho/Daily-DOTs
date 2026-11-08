@@ -95,6 +95,10 @@ def audit_html(raw, rendered, day):
     chunks = re.findall(r'<!-- story .*?-->\n(.*?)<!-- endstory -->', raw, re.S)
     for chunk, item in zip(chunks, day["items"]):
         visible = core.plain(parsed.article_text[f's-{core.item_key(item)}'])
+        if item["kind"] == "light":
+            for value in item["light"].values():
+                if core.plain(value) not in visible:
+                    raise ValueError("趣闻页文字遗漏")
         blocks = re.findall(r'<!-- block \S+ (heading|paragraph) -->\s*(.*?)(?=<!--)', chunk, re.S)
         for kind, block in blocks:
             if kind == "heading":

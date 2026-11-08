@@ -1,0 +1,26 @@
+/* 纸片末页：颜色、字级和留白固定，长度由正文决定。 */
+.pg-light{letter-spacing:normal;background:#fbf9f4;color:#1e2748}
+.pg-light .pg-in{padding:35px 16px 0;background:radial-gradient(ellipse at 8% 30%,#dce2f166,transparent 65%),#fbf9f4}
+.light-collage{position:relative;margin:0 10px 0 4px;padding:0 0 12px}
+.light-back{position:absolute;inset:15px -7px 3px 8px;background:#dce2f1;border:1px solid #bfc8e0;transform:rotate(2deg)}
+.light-letter{position:relative;padding:78px 22px 18px;background:#fffdf8;border:1px solid #bfc8e0;outline:3px solid #fff;box-shadow:0 6px 20px #1e274818;overflow-wrap:anywhere}
+.light-letter:before{content:'';position:absolute;inset:7px;border:1px solid #1e27481b;pointer-events:none}
+.light-tape{position:absolute;z-index:3;top:-8px;left:36%;width:84px;height:19px;background:#bfc8e078;transform:rotate(-3deg);border-left:1px dashed #a9b3cc;border-right:1px dashed #a9b3cc}
+.light-botanical{position:absolute;width:90px;height:auto;right:-15px;top:-12px;transform:rotate(8deg);pointer-events:none}
+.light-word{font:italic 43px/1.1 "Daily Latin","Daily WenKai",serif;letter-spacing:-.03em;margin:8px 0 10px}
+.light-gloss{font:17px/1.9 "Daily WenKai",serif;color:#46536f;margin:0 0 23px}
+.light-divider{width:50px;border-top:1px solid #a9b3cc;margin-bottom:22px}
+.pg-light .hl{font:400 26px/1.5 "Daily WenKai",serif;letter-spacing:.015em;margin:0 0 20px;color:#1e2748}
+.pg-light .body,.light-copy{font:16.5px/1.9 "Daily WenKai",serif;color:#36425d}
+.light-copy p{margin:0 0 15px}.light-copy .key{font:inherit;font-weight:400;border:0;padding:0}
+.light-letter .q{color:inherit;font-weight:400;font-variant-numeric:normal}.light-letter strong{color:inherit}
+.light-source{border-top:1px solid #dce2f1;padding-top:14px;font:11px/1.7 var(--sans);color:#5c6884}
+.light-source p{margin:0}.light-source a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.light-category{font:italic 20px/1.9 "Daily Latin","Daily WenKai",serif;text-align:right;color:#64718d;margin:15px 0 0}
+.pg-light .pg-foot{padding-top:20px}
+.pg-light .to-toc{background:#fffdf8;color:#46536f;border-color:#a9b3cc;font:13px/24px var(--sans);letter-spacing:normal;box-shadow:none;padding:9px 20px}
+body.flip.on-light::after{background:linear-gradient(to bottom,transparent,#fbf9f4 70%)}
+.light-source a:focus-visible{outline:2px solid #46536f;outline-offset:5px}
+@media(min-width:640px){.pg-light .pg-in{padding:35px 42px 0}.light-letter{padding:90px 38px 24px}.light-word{font-size:54px}.light-copy{font-size:17px}}
+@media(max-width:350px){.pg-light .pg-in{padding:35px 12px 0}.light-letter{padding:78px 17px 17px}.light-word{font-size:36px}.pg-light .hl{font-size:22px}.light-botanical{width:80px}}
+@media print{.light-collage{break-inside:avoid}.pg-light{print-color-adjust:exact}}
