@@ -32,6 +32,8 @@ jobs:
           path: |
             tools/fonts/NotoSerifCJK-Bold.ttc
             tools/fonts/NotoSansCJK-Regular.ttc
+            tools/fonts/LXGWWenKai-Regular.ttf
+            tools/fonts/LiberationSerif-Italic.ttf
           key: noto-cjk-${{ hashFiles('tools/fetch_fonts.py') }}
       - name: Download or verify fonts (including cache hits)
         run: python tools/fetch_fonts.py

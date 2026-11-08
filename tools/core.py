@@ -98,7 +98,7 @@ def weekday(iso):
 
 
 def item_key(it):
-    return "x" if it["kind"] == "explore" else str(it["number"])
+    return "x" if it["kind"] in ("explore", "light") else str(it["number"])
 
 
 # ---------- 解析 ----------
@@ -345,6 +345,9 @@ def validate(doc, rep):
                 rep.error(it["line"], f"编号应为 {want}，实际为 {it['number']}")
         if explores and day["items"][-1]["kind"] != "explore":
             rep.warn(explores[0]["line"], "探索位应放在主新闻之后")
+        lights = [i for i in day["items"] if i["kind"] == "light"]
+        if lights and (len(lights) + len(explores) > 1 or day["items"][-1]["kind"] != "light"):
+            rep.error(no, "趣闻页与探索位共用一个末页，不能同时出现或放在主新闻之前")
         domains = {}
         for it in mains:
             if it["domain"] in domains:

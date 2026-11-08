@@ -90,6 +90,23 @@ def parse(text, path):
         ids.append(sid)
         item = {"kind": "explore" if info.get("exploration") else "main", "line": no,
                 "number": number, "domain": category, "title": title[3:], "sections": []}
+        if "light" in info:
+            light = info["light"]
+            if info.get("exploration"):
+                rep.error(no, "同一条不能同时是探索位和趣闻页")
+            if not isinstance(light, dict) or not isinstance(light.get("category_fr"), str) or not light["category_fr"].strip():
+                rep.error(no, "light 需要非空 category_fr 法文类别")
+                continue
+            if set(light) - {"category_fr", "word", "gloss"}:
+                rep.error(no, "light 只接受 category_fr、word、gloss")
+            for field, value in light.items():
+                if not isinstance(value, str) or not value.strip() or "\n" in value:
+                    rep.error(no, f"light.{field} 必须是非空单行文字")
+                else:
+                    check_inline(value, no, rep)
+            if next((spec for spec in stories if spec["story_id"] == sid), {}).get("components"):
+                rep.error(no, "趣闻页不接受地图组件")
+            item.update(kind="light", light=light)
         check_inline(item["title"], no, rep)
         content = re.sub(r'^\s*> 摘要：[^\n]*\n', "", content, count=1)
         if content.count("<!-- sources -->") != 1:
@@ -100,8 +117,14 @@ def parse(text, path):
         if parts[0].strip():
             rep.error(no, "条目中出现未标记文字")
         current = None
+        if item["kind"] == "light":
+            current = {"key": "note", "label": "", "raw_label": "", "line": no, "blocks": []}
+            item["sections"].append(current)
         for block_id, kind, value in zip(parts[1::3], parts[2::3], parts[3::3]):
             value = value.strip()
+            if item["kind"] == "light" and kind != "paragraph":
+                rep.error(no, "趣闻页正文只需 paragraph，不加小节标签")
+                continue
             if kind == "heading":
                 if not value.startswith("### ") or "\n" in value:
                     rep.error(no, f"{block_id}: 小节标题格式错误")
@@ -115,6 +138,8 @@ def parse(text, path):
                 current["blocks"].extend(parse_blocks(list(enumerate(value.splitlines(), start=no)), rep))
             else:
                 rep.error(no, f"{block_id}: 不支持的正文块或缺少小节标题：{kind}")
+        if item["kind"] == "light" and not any(s["blocks"] for s in item["sections"]):
+            rep.error(no, "趣闻页需要正文")
         # 来源区可以空着：页面上不出“来源”小节，也不写占位说明。
         source_blocks = parse_blocks(list(enumerate(sources.strip().splitlines(), start=no)), rep)
         if source_blocks:

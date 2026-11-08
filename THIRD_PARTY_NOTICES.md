@@ -33,3 +33,12 @@
 ## 新闻来源
 
 原稿与 HTML 保留公开报道链接。链接说明新闻依据，不表示来源网站将版权或再授权权利转让给本项目。
+
+## 趣闻页资源
+
+- 设计参考 [Maison des Mots](https://github.com/BaxterL/maison-des-mots-skill)，SKILL.md blob `9d4cf0ba3d4367dce6bbae288dadbe11495ec772`，Copyright (c) 2026 BaxterL，MIT；声明保留于 `tools/assets/LICENSE-Maison.txt` 并随含趣闻页的单文件成品内嵌。
+- `tools/assets/light-botanical.png` 是为本版面生成的固定装饰插画，不作植物学图鉴。
+- 霞鹜文楷：官方 `lxgw/LxgwWenKai` commit `4becfb4d5cf0c92cfdb60a6e9b504bda43315325` 的 `fonts/TTF/LXGWWenKai-Regular.ttf`，SHA-256 `2d73eea94ad808999d90c0000c239a84a33b09d4bc6ab6c5b8bbf1eda8a7fc8b`；SIL OFL 1.1，见 `tools/fonts/OFL-WenKai.txt`。
+- Liberation Serif Italic 2.1.5：官方发布归档 `https://github.com/liberationfonts/liberation-fonts/files/7261482/liberation-fonts-ttf-2.1.5.tar.gz`，归档 SHA-256 `7191c669bf38899f73a2094ed00f7b800553364f90e2637010a69c0e268f25d0`；其中 `LiberationSerif-Italic.ttf` SHA-256 `0e3dea9f8d613e006ccfa62201f33e265d19167bd0907725c3e145368b04fc2e`。SIL OFL 1.1，见 `tools/fonts/LICENSE-Liberation.txt`。
+
+新增字体仍由 `fetch_fonts.py` 从官方来源下载并验 hash，不入 Git；只在含趣闻页的成品内嵌对应文字子集，使用 WOFF。旧期不加载纸片资源。

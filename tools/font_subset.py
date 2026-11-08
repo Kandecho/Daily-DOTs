@@ -90,7 +90,64 @@ def embed(html, font_dir=None):
         rules.append(f'@font-face{{font-family:"{family}";font-style:normal;font-weight:{weight};font-display:swap;src:url(data:font/woff;base64,{encoded}) format("woff")}}')
         info.append({"source": original, "weight": weight, "format": "woff", "bytes": len(payload),
                      "glyphs": len(emitted.getGlyphOrder()), "missing_visible_chars": 0, "license": "SIL OFL 1.1"})
+    if 'class="pg pg-light"' in html:
+        extra_rules, extra_info = light_fonts(html, font_dir)
+        rules.extend(extra_rules)
+        info.extend(extra_info)
     rules.append(':root{--serif:"Daily Serif SC","Noto Serif SC","Source Han Serif SC","Songti SC",serif;--sans:"Daily Sans SC","PingFang SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif}')
     license_text = LICENSE.read_text(encoding="utf-8")
+    if 'class="pg pg-light"' in html:
+        license_text += "\n\n" + "\n\n".join(
+            (LICENSE.parent / name).read_text(encoding="utf-8")
+            for name in ("OFL-WenKai.txt", "LICENSE-Liberation.txt"))
+        license_text += "\n\n" + (Path(__file__).with_name("assets") / "LICENSE-Maison.txt").read_text(encoding="utf-8")
     return (html.replace("</style>", "\n" + "\n".join(rules) + "\n</style>", 1)
             .replace("</head>", '<template id="font-license"><pre>' + escape(license_text) + '</pre></template>\n</head>', 1)), info
+
+
+def light_fonts(html, font_dir):
+    """Subset the two fixed paper-page fonts only when this issue contains that page."""
+    import re
+    from fetch_fonts import FONTS, verify
+    fragment = re.search(r'<article class="light-letter".*?</article>', html, re.S)[0]
+    # Body/title use WenKai; only optional word and the French category use Latin.
+    latin = re.findall(r'<div class="light-(?:word|category)"[^>]*>(.*?)</div>', fragment, re.S)
+    latin_text = VisibleText("<body>" + "".join(latin) + "</body>").text
+    cjk_text = VisibleText("<body>" + fragment + "</body>").text
+    specs = [("LXGWWenKai-Regular.ttf", "Daily WenKai", "normal", cjk_text),
+             ("LiberationSerif-Italic.ttf", "Daily Latin", "italic", latin_text)]
+    rules, info = [], []
+    for filename, family, style, text in specs:
+        path = font_dir / filename
+        verify(path, FONTS[filename][1])
+        font = TTFont(path, recalcTimestamp=False)
+        if font['OS/2'].fsType:
+            raise ValueError("字体嵌入权限需复核：" + filename)
+        wanted = {ord(c) for c in text if not c.isspace()}
+        if family == 'Daily Latin':
+            # Non-Latin wordheads fall back to the already-checked WenKai subset.
+            wanted &= set(font.getBestCmap())
+            text = ''.join(c for c in text if ord(c) in wanted or c.isspace())
+        missing = wanted - set(font.getBestCmap())
+        if missing:
+            raise ValueError(f"字体缺字：{filename} {sorted(missing)}")
+        options = subset.Options()
+        options.recalc_timestamp = False
+        options.name_IDs = ['*']
+        options.name_legacy = True
+        sub = subset.Subsetter(options=options); sub.populate(text=text); sub.subset(font)
+        psname = family.replace(' ', '') + '-' + style.title()
+        names = {1: family, 2: style.title(), 3: psname, 4: family, 6: psname, 16: family, 17: style.title()}
+        for record in font['name'].names:
+            if record.nameID in names:
+                record.string = names[record.nameID].encode(record.getEncoding())
+        font.flavor = 'woff'
+        buf = io.BytesIO(); font.save(buf); payload = buf.getvalue()
+        emitted = TTFont(io.BytesIO(payload))
+        if wanted - set(emitted.getBestCmap()):
+            raise ValueError("趣闻页字体子集遗漏文字")
+        encoded = base64.b64encode(payload).decode('ascii')
+        rules.append(f'@font-face{{font-family:"{family}";font-style:{style};font-weight:400;font-display:swap;src:url(data:font/woff;base64,{encoded}) format("woff")}}')
+        info.append({'source': filename, 'weight': 400, 'format': 'woff', 'bytes': len(payload),
+                     'glyphs': len(emitted.getGlyphOrder()), 'missing_visible_chars': 0, 'license': 'SIL OFL 1.1'})
+    return rules, info
